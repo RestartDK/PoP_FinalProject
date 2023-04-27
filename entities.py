@@ -25,20 +25,21 @@ class Entities:
         self.ROOM_WIDTH = ROOM_WIDTH
         self.ROOM_HEIGHT = ROOM_HEIGHT
 
+    # TODO: Change the file names to actual good pics
     # Creating all the items in the game
     def defineItems(self):
-        paper = Item("Piece of paper", "Common")
-        rock = Item("Rock", "Common")
-        scissors = Item("Scissors", "Common")
-        silver = Item("Silver ingot", "Rare")
-        iron = Item("Iron ingot", "Rare")
-        copper = Item("Copper ingot", "Rare")
-        amulet = Item("Amulet", "Epic")
-        medalion = Item("Medalion", "Epic")
-        trophy = Item("Trophy", "Epic")
-        wand = Item("Wand", "Legendary")
-        emerald = Item("Emerald", "Legendary")
-        pandora = Item("Pandora's box", "Legendary")
+        paper = Item("Piece of paper", "Common", 30, 30, "assets/items/gold.png")
+        rock = Item("Rock", "Common", 30, 30, "assets/items/gold.png")
+        scissors = Item("Scissors", "Common", 30, 30, "assets/items/gold.png")
+        silver = Item("Silver ingot", "Rare", 30, 30, "assets/items/gold.png")
+        iron = Item("Iron ingot", "Rare", 30, 30, "assets/items/gold.png")
+        copper = Item("Copper ingot", "Rare", 30, 30, "assets/items/gold.png")
+        amulet = Item("Amulet", "Epic", 30, 30, "assets/items/gold.png")
+        medalion = Item("Medalion", "Epic", 30, 30, "assets/items/gold.png")
+        trophy = Item("Trophy", "Epic", 30, 30, "assets/items/gold.png")
+        wand = Item("Wand", "Legendary", 30, 30, "assets/items/gold.png")
+        emerald = Item("Emerald", "Legendary", 30, 30, "assets/items/gold.png")
+        pandora = Item("Pandora's box", "Legendary", 30, 30, "assets/items/gold.png")
 
         # Sorting out the items into 3 different lists of rarity
         common_items = [paper, rock, scissors]
@@ -93,7 +94,7 @@ class Entities:
         # one item randomly with equal weighted probability
         items = rarity[0]
         item = items[random.randint(0, len(items)-1)]
-        chest = Chest("chest", item, 50, 50)   
+        chest = Chest("chest", item, 30, 30)   
 
         return chest
     
@@ -104,7 +105,7 @@ class Entities:
         l = random.choice([2, 4])
 
         # Default damage for trap is 1 health for the character
-        trap = Trap(1, w, l)
+        trap = Trap(1, 30, 30)
 
         return trap
     
@@ -168,8 +169,8 @@ class Entities:
             self.placeEntityType(traps, room)
 
     # Create full labyrinth with n rooms
-    def createLabyrinth(self, ROOM_WIDTH, ROOM_HEIGHT):
-        rooms = self.createRooms(self.getRoomCount(), ROOM_WIDTH, ROOM_HEIGHT, maxChests=3, maxTraps=3, maxItems=4)
+    def createLabyrinth(self):
+        rooms = self.createRooms(self.getRoomCount(), self.ROOM_WIDTH, self.ROOM_HEIGHT, maxChests=3, maxTraps=3, maxItems=4)
         self.placeAllEntities(rooms)
 
         return rooms

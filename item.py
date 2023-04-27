@@ -3,13 +3,15 @@
 # in game
 
 class Item:
-    def __init__(self, name, rarity, x_coordinate, y_coordinate, width, height):
+    def __init__(self, name, rarity, width, height, picture_path, x_coordinate=None, 
+                 y_coordinate=None):
         self.name = name
         self.rarity = rarity
-        self.x_coordinate = x_coordinate
-        self.y_coordinate = y_coordinate
         self.width = width
         self.height = height
+        self.picture_path = picture_path
+        self.x_coordinate = x_coordinate
+        self.y_coordinate = y_coordinate
 
     # Returns the points value for the item
     def rarityPoints(self) -> int:
@@ -41,6 +43,9 @@ class Item:
     def getHeight(self) -> int:
         return self.height
     
+    def getPicture_Path(self) -> str:
+        return self.picture_path
+    
      # Setter methods
     def setX_Coordinate(self, x_coordinate):
         self.x_coordinate = x_coordinate
@@ -53,6 +58,9 @@ class Item:
     
     def setHeight(self, height):
         self.height = height
+        
+    def setPicture_Path(self, picture_path):
+        self.picture_path = picture_path
     
     
 
