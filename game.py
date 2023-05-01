@@ -257,17 +257,3 @@ class GameState():
             self.end()
         if self.state == "secretEnd":
             self.secretEnd()
-            
-# TODO: Put this in run method
-if __name__ == "__main__":
-    #Initalise Game Object (controller)
-    entities = Entities(5, SCREEN_WIDTH, SCREEN_HEIGHT)
-        
-    game = Game(entities, SCREEN_WIDTH, SCREEN_HEIGHT)
-    
-    # Game loop
-    clock = pygame.time.Clock()
-    running = True
-    while running:
-        # Handle events
-        game.handle_events()
