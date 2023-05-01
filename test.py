@@ -1,7 +1,7 @@
 # game.py
 # This file contains the controller class of the application
 
-import pygame, sys
+import pygame, sys, time
 from character import Character
 from chest import Chest
 from room import Room
@@ -31,123 +31,29 @@ class FrontEndCharacter(pygame.sprite.Sprite):
     def update(self):
         self.rect.x = self.character.getX_Coordinate()
         self.rect.y = self.character.getY_Coordinate()
-        #self.pickUp(item_sprites)
-        #self.openChest(chest_sprites)
-        #self.onTrap(trap_sprites)
-        #self.onExit(exit_sprites, game_state)
-    
-    def pickUp(self, item_sprites):
-        # If the character has collided with sprite, remove it from the screen
-        collided_items = pygame.sprite.spritecollide(self, item_sprites, True)
-        if collided_items is True:
-            for front_end_item in collided_items:
-                item = front_end_item.entity
-                self.character.addItem(item)    
-                # Updating score with new item
-                self.character.changeScore()
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                print("You just picked up: ", item.getName())
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    
-    def openChest(self, chest_sprites):
-        collided_chests = pygame.sprite.spritecollide(self, chest_sprites, True)
-        if collided_chests is True:
-            for front_end_chest in collided_chests:
-                chest = front_end_chest.entity
-                item = chest.getItem()
-                if item != None:
-                    self.character.addItem(item)
-                    # Updating score with new item
-                    self.character.changeScore()
-                    
-                    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                    print("You just picked up: ", chest.getItem().getName(), " (", chest.getItem().getRarity(), ")")
-                    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                    print()
-                    chest.setItem(None)
-    
-    def onTrap(self, trap_sprites):
-        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, True)
-        if collided_traps is True:
-            for front_end_trap in collided_traps:
-                trap = front_end_trap.entity
-                collided_traps.remove(front_end_trap)
-                self.stepTrap(trap)
-                damage = trap.getDamage()
-                self.character.removeHealth(damage)
-                print("")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print("Oh no you have walked into a trap and you have been damaged by 1 heart!")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print("")
-    
-    def onExit(self, exit_sprites, game_state):
-        collided_exits = pygame.sprite.spritecollide(self, exit_sprites, False)
-        if collided_exits is True:
-            pygame.sprite.spritecollide(self, exit_sprites, True)
-            game_state.state = "changeRoom"        
-
-        
-    def check_collisions(self, chest_sprites, item_sprites, trap_sprites, exit_sprites, game_state):
+            
+    def optionalCollisions(self, chest_sprites, item_sprites):
         collided_chests = pygame.sprite.spritecollide(self, chest_sprites, False)
-        collided_items = pygame.sprite.spritecollide(self, item_sprites, False)
-        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, False)
-        collided_exit = pygame.sprite.spritecollide(self, exit_sprites, False)
-        
-        if len(collided_chests) > 0:
-            # The character has collided with a chest
-            # Call the openChest() method to interact with the chest
-            for front_end_chest in collided_chests:
-                chest = front_end_chest.entity
-                #if keys_pressed[pygame.K_e]:
-                self.openChest(chest)
-            
-            
-            # The character has collided with an item
-            # Call the pickUpItem() method to interact with the item
-            for front_end_item in collided_items:
-                item = front_end_item.entity
-                self.pickUpItem(item)
-                front_end_item.kill()
-            
-            
-        if len(collided_traps) > 0:
-            # The character has collided with a trap
-            # Call the stepTrap() method to interact with the trap
-            for front_end_trap in collided_traps:
-                trap = front_end_trap.entity
-                collided_traps.remove(front_end_trap)
-                self.stepTrap(trap)
-                
-        if len(collided_exit) > 0:
-            game_state.state = "changeRoom"
-            
-    def check_collisions2(self, chest_sprites, item_sprites, trap_sprites, exit_sprites, game_state):
-        keys_pressed = pygame.key.get_pressed()
-        
-        collided_chests = pygame.sprite.spritecollide(self, chest_sprites, False, True)
-        collided_items = pygame.sprite.spritecollide(self, item_sprites, False, True)
-        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, False, True)
-        collided_exit = pygame.sprite.spritecollide(self, exit_sprites, False, True)
-        
         if collided_chests:
             for front_end_chest in collided_chests:
                 chest = front_end_chest.entity
-                #if keys_pressed[pygame.K_e]:
                 self.openChest(chest)
-        
+
+        collided_items = pygame.sprite.spritecollide(self, item_sprites, True)
         if collided_items:
             for front_end_item in collided_items:
                 item = front_end_item.entity
                 self.pickUpItem(item)
-            
-            
+    
+    def mandatoryCollisions(self, trap_sprites, exit_sprites, game_state):
+        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, False)
         if collided_traps:
             for front_end_trap in collided_traps:
                 trap = front_end_trap.entity
-                collided_traps.remove(front_end_trap)
+                #collided_traps.remove(front_end_trap)
                 self.stepTrap(trap)
-                
+        
+        collided_exit = pygame.sprite.spritecollide(self, exit_sprites, True)    
         if collided_exit:
             game_state.state = "changeRoom"
                 
@@ -297,6 +203,7 @@ class Game():
         # Updates the score label on the gameoverscreen
         self.gameover_screen.updateScoreLabel(self.backend_character.getScore())
         self.secretEnd_screen.updateScoreLabel(self.backend_character.getScore())
+        
         # If there are no more rooms or character health is 0, end the game
         if self.room_count >= len(self.labyrinth) or self.backend_character.getHealth() < 0:
             self.game_state.state = "end"
@@ -304,29 +211,29 @@ class Game():
         if self.backend_character.checkEasterEgg() == True:
             self.game_state.state = "secretEnd"
             return
-        self.initialiseEntities(self.labyrinth[self.room_count])
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
-                #elif event.key == pygame.K_e:
-                    #self.frontend_character.pickUp(self.item_sprites)
-                    #self.frontend_character.openChest(self.chest_sprites)
-            #self.frontend_character.onTrap(self.trap_sprites)
-            #self.frontend_character.onExit(self.exit_sprites, self.game_state)
+                if event.key == pygame.K_e:
+                    self.frontend_character.optionalCollisions(self.chest_sprites, self.item_sprites)
+        
+        self.frontend_character.mandatoryCollisions(self.trap_sprites, self.exit_sprites, self.game_state)
         
 
     def changeRoom_events(self):  
         # Reset character position
+        self.backend_character.setX_Coordinate(0)
+        self.backend_character.setY_Coordinate(0)
+        self.initialiseEntities(self.labyrinth[self.room_count])
         print("Room count: ", self.room_count)
         print("Total rooms: ", len(self.labyrinth))
         print("Player score: ", self.backend_character.getScore())
-        self.backend_character.setX_Coordinate(0)
-        self.backend_character.setY_Coordinate(0)
         
         # Increase room count to go to next room
         self.room_count += 1
+        
         print("You are in Room: ", self.room_count)
         
         # Chane game state to go back to initialise new room
@@ -361,11 +268,10 @@ class Game():
                 self.game_state.state = "intro"
                     
                 
-    def update(self, dt):
+    def update(self):
         keys_pressed = pygame.key.get_pressed()
         self.backend_character.update(keys_pressed, SCREEN_WIDTH, SCREEN_HEIGHT)
         self.frontend_character.update()
-        self.frontend_character.check_collisions(self.chest_sprites, self.item_sprites, self.trap_sprites, self.exit_sprites, self.game_state)
         
     def drawRoom(self):
         self.screen.fill((255, 255, 255))
@@ -451,8 +357,7 @@ class GameState():
         game.mainGame_events()
         
         # Update game state
-        dt = clock.tick(60) / 1000.0
-        game.update(dt)
+        game.update()
         
         # Draw the screen
         game.drawRoom()

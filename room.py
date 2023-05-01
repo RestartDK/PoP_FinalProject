@@ -37,7 +37,7 @@ class Room:
         return self.exit_x
     
     def getExit_Y(self):
-        return self.exit_Y
+        return self.exit_y
     
     # Setter methods
     def setName(self, name):
