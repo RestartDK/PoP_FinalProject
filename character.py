@@ -19,13 +19,13 @@ class Character:
 
     # Update character's position based on elapsed time
     def update(self, keys_pressed, SCREEN_WIDTH, SCREEN_HEIGHT):
-        if keys_pressed[pygame.K_UP]:
+        if keys_pressed[pygame.K_w]:
             self.y_coordinate -= 1
-        if keys_pressed[pygame.K_DOWN]:
+        if keys_pressed[pygame.K_s]:
             self.y_coordinate += 1
-        if keys_pressed[pygame.K_LEFT]:
+        if keys_pressed[pygame.K_a]:
             self.x_coordinate -= 1
-        if keys_pressed[pygame.K_RIGHT]:
+        if keys_pressed[pygame.K_d]:
             self.x_coordinate += 1
             
         # Adjust character's position to stay within screen boundaries

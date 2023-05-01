@@ -3,264 +3,21 @@
 
 import pygame, sys
 from character import Character
-from chest import Chest
 from room import Room
 from entities import Entities
-from trap import Trap
-from item import Item
+from frontend import FrontEndCharacter, FrontEndGameover, FrontEndEntity, FrontEndExit
 
-# Define constants for the screen width and height
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-ROOM_WIDTH = 400
-ROOM_HEIGHT = 400
-
-# Define a player object by extending pygame.sprite.Sprite
-# The surface drawn on the screen is now an attribute of 'player'
-class FrontEndCharacter(pygame.sprite.Sprite):
-    def __init__(self, picture_path, character: Character):
-        super().__init__()
-        self.character = character
-        self.image = pygame.image.load(picture_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (character.getWidth(), character.getHeight())) 
-        self.rect = self.image.get_rect()
-        self.rect.x = character.getX_Coordinate()
-        self.rect.y = character.getY_Coordinate()
-        
-    # Move the sprite based on user keypresses
-    def update(self):
-        self.rect.x = self.character.getX_Coordinate()
-        self.rect.y = self.character.getY_Coordinate()
-        #self.pickUp(item_sprites)
-        #self.openChest(chest_sprites)
-        #self.onTrap(trap_sprites)
-        #self.onExit(exit_sprites, game_state)
-    
-    def pickUp(self, item_sprites):
-        # If the character has collided with sprite, remove it from the screen
-        collided_items = pygame.sprite.spritecollide(self, item_sprites, True)
-        if collided_items is True:
-            for front_end_item in collided_items:
-                item = front_end_item.entity
-                self.character.addItem(item)    
-                # Updating score with new item
-                self.character.changeScore()
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                print("You just picked up: ", item.getName())
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    
-    def openChest(self, chest_sprites):
-        collided_chests = pygame.sprite.spritecollide(self, chest_sprites, True)
-        if collided_chests is True:
-            for front_end_chest in collided_chests:
-                chest = front_end_chest.entity
-                item = chest.getItem()
-                if item != None:
-                    self.character.addItem(item)
-                    # Updating score with new item
-                    self.character.changeScore()
-                    
-                    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                    print("You just picked up: ", chest.getItem().getName(), " (", chest.getItem().getRarity(), ")")
-                    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                    print()
-                    chest.setItem(None)
-    
-    def onTrap(self, trap_sprites):
-        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, True)
-        if collided_traps is True:
-            for front_end_trap in collided_traps:
-                trap = front_end_trap.entity
-                collided_traps.remove(front_end_trap)
-                self.stepTrap(trap)
-                damage = trap.getDamage()
-                self.character.removeHealth(damage)
-                print("")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print("Oh no you have walked into a trap and you have been damaged by 1 heart!")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print("")
-    
-    def onExit(self, exit_sprites, game_state):
-        collided_exits = pygame.sprite.spritecollide(self, exit_sprites, False)
-        if collided_exits is True:
-            pygame.sprite.spritecollide(self, exit_sprites, True)
-            game_state.state = "changeRoom"        
-
-        
-    def check_collisions(self, chest_sprites, item_sprites, trap_sprites, exit_sprites, game_state):
-        collided_chests = pygame.sprite.spritecollide(self, chest_sprites, False)
-        collided_items = pygame.sprite.spritecollide(self, item_sprites, False)
-        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, False)
-        collided_exit = pygame.sprite.spritecollide(self, exit_sprites, False)
-        
-        if len(collided_chests) > 0:
-            # The character has collided with a chest
-            # Call the openChest() method to interact with the chest
-            for front_end_chest in collided_chests:
-                chest = front_end_chest.entity
-                #if keys_pressed[pygame.K_e]:
-                self.openChest(chest)
-            
-            
-            # The character has collided with an item
-            # Call the pickUpItem() method to interact with the item
-            for front_end_item in collided_items:
-                item = front_end_item.entity
-                self.pickUpItem(item)
-                front_end_item.kill()
-            
-            
-        if len(collided_traps) > 0:
-            # The character has collided with a trap
-            # Call the stepTrap() method to interact with the trap
-            for front_end_trap in collided_traps:
-                trap = front_end_trap.entity
-                collided_traps.remove(front_end_trap)
-                self.stepTrap(trap)
-                
-        if len(collided_exit) > 0:
-            game_state.state = "changeRoom"
-            
-    def check_collisions2(self, chest_sprites, item_sprites, trap_sprites, exit_sprites, game_state):
-        keys_pressed = pygame.key.get_pressed()
-        
-        collided_chests = pygame.sprite.spritecollide(self, chest_sprites, False, True)
-        collided_items = pygame.sprite.spritecollide(self, item_sprites, False, True)
-        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, False, True)
-        collided_exit = pygame.sprite.spritecollide(self, exit_sprites, False, True)
-        
-        if collided_chests:
-            for front_end_chest in collided_chests:
-                chest = front_end_chest.entity
-                #if keys_pressed[pygame.K_e]:
-                self.openChest(chest)
-        
-        if collided_items:
-            for front_end_item in collided_items:
-                item = front_end_item.entity
-                self.pickUpItem(item)
-            
-            
-        if collided_traps:
-            for front_end_trap in collided_traps:
-                trap = front_end_trap.entity
-                collided_traps.remove(front_end_trap)
-                self.stepTrap(trap)
-                
-        if collided_exit:
-            game_state.state = "changeRoom"
-                
-        
-    def openChest(self, chest: Chest):
-        item = chest.getItem()
-        if item != None:
-                self.character.addItem(item)
-                # Updating score with new item
-                self.character.changeScore()
-                
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                print("You just picked up: ", chest.getItem().getName(), " (", chest.getItem().getRarity(), ")")
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                print()
-                chest.setItem(None)
-    
-    def pickUpItem(self, item: Item):
-        self.character.addItem(item)    
-        # Updating score with new item
-        self.character.changeScore()
-        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        print("You just picked up: ", item.getName())
-        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    
-    def stepTrap(self, trap: Trap):
-        damage = trap.getDamage()
-        self.character.removeHealth(damage)
-        print("")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("Oh no you have walked into a trap and you have been damaged by 1 heart!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("")
-        
-class FrontEndRoom(pygame.sprite.Sprite):
-    def __init__(self, picture_path, room: Room):
-        super().__init__()
-        self.room = room
-        self.image = pygame.image.load(picture_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (room.getWidth(), room.getHeight()))
-        self.rect = self.image.get_rect()
-        self.rect.x = room.getX_Coordinate()
-        self.rect.y = room.getY_Coordinate()
-        
-
-class FrontEndExit(pygame.sprite.Sprite):
-    def __init__(self, picture_path, room: Room):
-        super().__init__()
-        self.room = room
-        self.image = pygame.image.load(picture_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (50, 50))
-        self.rect = self.image.get_rect()
-        self.rect.x = room.getExit_X()
-        self.rect.y = room.getExit_Y()
-        
-    def update(self):
-        self.rect.x = self.entity.getExit_X()
-        self.rect.y = self.entity.getExit_Y()
-    
-# Frontend class for all types of entities    
-class FrontEndEntity(pygame.sprite.Sprite):
-    def __init__(self, picture_path, entity):
-        super().__init__()
-        self.entity = entity
-        self.image = pygame.image.load(picture_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (entity.getWidth(), entity.getHeight()))
-        self.rect = self.image.get_rect()
-        self.rect.x = entity.getX_Coordinate()
-        self.rect.y = entity.getY_Coordinate()
-        
-    def update(self):
-        self.rect.x = self.entity.getX_Coordinate()
-        self.rect.y = self.entity.getY_Coordinate()
-    
-class FrontEndGameover(pygame.sprite.Sprite):
-    def __init__(self, exit_path, replay_path, score):
-        super().__init__()
-        self.image = pygame.image.load(exit_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (SCREEN_WIDTH, SCREEN_HEIGHT/2))
-        self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 0
-        self.score = score
-        self.font = pygame.font.SysFont("monospace", 36)
-        self.score_label = self.font.render("Final Score: " + str(score), 1, (128, 128, 128))
-        self.replay_button = pygame.image.load(replay_path).convert_alpha()
-        self.replay_button = pygame.transform.scale(self.replay_button, (150, 75))
-        self.replay_button_rect = self.replay_button.get_rect()
-        self.replay_button_rect.x = SCREEN_WIDTH/2 - 75
-        self.replay_button_rect.y = SCREEN_HEIGHT/2 + 100
-        
-    def updateScoreLabel(self, score):
-        self.score_label = self.font.render("Final Score: " + str(score), 1, (255, 255, 255))
-    
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
-        screen.blit(self.score_label, (SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2))
-        screen.blit(self.replay_button, self.replay_button_rect)
-        
-    def setScore(self, score):
-        self.score = score
-
-# TODO: Keep this here and move other methods to a frontend.py file
 # Controller class to connect the frontend and backend
 class Game():
     def __init__(self, entities: Entities, SCREEN_WIDTH: int, SCREEN_HEIGHT: int):
         pygame.init()
-        self.labyrinth = entities.createLabyrinth()
+        self.entities = entities
+        self.SCREEN_WIDTH = SCREEN_WIDTH
+        self.SCREEN_HEIGHT = SCREEN_HEIGHT
+        self.labyrinth = self.entities.createLabyrinth()
         self.game_state = GameState(self)
         self.room_count = 0
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        self.SCREEN_WIDTH = SCREEN_WIDTH
-        self.SCREEN_HEIGHT = SCREEN_HEIGHT
         self.start_button = pygame.image.load("assets/buttons/start.png")
         self.background = pygame.image.load("assets/backgrounds/BG.jpeg").convert_alpha()
         self.background = pygame.transform.scale(self.background, (self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
@@ -274,8 +31,13 @@ class Game():
         self.chest_sprites = pygame.sprite.Group()
         self.item_sprites = pygame.sprite.Group()
         self.trap_sprites = pygame.sprite.Group()
-        self.gameover_screen = FrontEndGameover("assets/buttons/gameover.png", "assets/buttons/replay.png", self.backend_character.getScore())
-        self.secretEnd_screen = FrontEndGameover("assets/buttons/crown.png", "assets/buttons/replay.png", self.backend_character.getScore())
+        self.gameover_screen = FrontEndGameover("assets/buttons/gameover.png", "assets/buttons/replay.png", self.backend_character.getScore(), self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.secretEnd_screen = FrontEndGameover("assets/buttons/crown.png", "assets/buttons/replay.png", self.backend_character.getScore(), self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.room_change = False
+        
+        self.font = pygame.font.SysFont("monospace", 24)
+        self.hud = self.font.render("Score: " + str(self.backend_character.getScore()) + " Health: " + 
+                                    str(self.backend_character.getHealth()), 1, (255, 255, 255)) 
         
     def handle_events(self):
         self.game_state.stateManager()
@@ -289,14 +51,20 @@ class Game():
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
-            if event.type ==  pygame.MOUSEBUTTONDOWN:
-                self.labyrinth = entities.createLabyrinth()
+                elif event.key == pygame.K_RETURN:
+                    self.labyrinth = self.entities.createLabyrinth()
+                    self.game_state.state = "changeRoom"
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.labyrinth = self.entities.createLabyrinth()
                 self.game_state.state = "changeRoom"
     
     def mainGame_events(self):
         # Updates the score label on the gameoverscreen
         self.gameover_screen.updateScoreLabel(self.backend_character.getScore())
         self.secretEnd_screen.updateScoreLabel(self.backend_character.getScore())
+        self.hud = self.font.render("Score: " + str(self.backend_character.getScore()) + " Health: " + 
+                                    str(self.backend_character.getHealth()), 1, (255, 255, 255))
+        
         # If there are no more rooms or character health is 0, end the game
         if self.room_count >= len(self.labyrinth) or self.backend_character.getHealth() < 0:
             self.game_state.state = "end"
@@ -304,29 +72,33 @@ class Game():
         if self.backend_character.checkEasterEgg() == True:
             self.game_state.state = "secretEnd"
             return
-        self.initialiseEntities(self.labyrinth[self.room_count])
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
-                #elif event.key == pygame.K_e:
-                    #self.frontend_character.pickUp(self.item_sprites)
-                    #self.frontend_character.openChest(self.chest_sprites)
-            #self.frontend_character.onTrap(self.trap_sprites)
-            #self.frontend_character.onExit(self.exit_sprites, self.game_state)
+                if event.key == pygame.K_e:
+                    self.frontend_character.optionalCollisions(self.chest_sprites, self.item_sprites)
         
+        # If the character collides with any exit or trap, run appropriate method
+        self.frontend_character.mandatoryCollisions(self.trap_sprites, self.exit_sprites, self.game_state, self)
+        
+        # If the character collides with the exit, change room and make room change false to continue labyrinth
+        if not pygame.sprite.spritecollide(self.frontend_character, self.exit_sprites, False):
+            self.room_change = False
 
     def changeRoom_events(self):  
         # Reset character position
+        self.backend_character.setX_Coordinate(0)
+        self.backend_character.setY_Coordinate(0)
+        self.initialiseEntities(self.labyrinth[self.room_count])
         print("Room count: ", self.room_count)
         print("Total rooms: ", len(self.labyrinth))
         print("Player score: ", self.backend_character.getScore())
-        self.backend_character.setX_Coordinate(0)
-        self.backend_character.setY_Coordinate(0)
         
         # Increase room count to go to next room
         self.room_count += 1
+        
         print("You are in Room: ", self.room_count)
         
         # Chane game state to go back to initialise new room
@@ -361,11 +133,10 @@ class Game():
                 self.game_state.state = "intro"
                     
                 
-    def update(self, dt):
+    def update(self):
         keys_pressed = pygame.key.get_pressed()
-        self.backend_character.update(keys_pressed, SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.backend_character.update(keys_pressed, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
         self.frontend_character.update()
-        self.frontend_character.check_collisions(self.chest_sprites, self.item_sprites, self.trap_sprites, self.exit_sprites, self.game_state)
         
     def drawRoom(self):
         self.screen.fill((255, 255, 255))
@@ -375,26 +146,27 @@ class Game():
         self.item_sprites.draw(self.screen)
         self.trap_sprites.draw(self.screen)
         self.exit_sprites.draw(self.screen)
+        self.screen.blit(self.hud, (500, 10))
         pygame.display.flip()
     
     def drawIntro(self):
         self.screen.fill((255, 255, 255))
         # Draw the background and start screen
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(self.start_button, (SCREEN_HEIGHT/2 - 130, SCREEN_WIDTH/2 - 200)) 
+        self.screen.blit(self.start_button, (self.SCREEN_HEIGHT/2 - 130, self.SCREEN_WIDTH/2 - 200)) 
         pygame.display.flip()
         
     def drawEnd(self):
         self.screen.blit(self.background, (0,0))
         self.screen.blit(self.gameover_screen.image, self.gameover_screen.rect)
-        self.screen.blit(self.gameover_screen.score_label, (SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2))
+        self.screen.blit(self.gameover_screen.score_label, (self.SCREEN_WIDTH/2 - 150, self.SCREEN_HEIGHT/2))
         self.screen.blit(self.gameover_screen.replay_button, self.gameover_screen.replay_button_rect)
         pygame.display.flip()
     
     def drawSecretEnd(self):
         self.screen.blit(self.background, (0,0))
         self.screen.blit(self.secretEnd_screen.image, self.secretEnd_screen.rect)
-        self.screen.blit(self.secretEnd_screen.score_label, (SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2))
+        self.screen.blit(self.secretEnd_screen.score_label, (self.SCREEN_WIDTH/2 - 150, self.SCREEN_HEIGHT/2))
         self.screen.blit(self.secretEnd_screen.replay_button, self.secretEnd_screen.replay_button_rect)
         pygame.display.flip()
     
@@ -441,39 +213,38 @@ class GameState():
         
     def intro(self):
         # Handle intro events
-        game.intro_events()
+        self.game.intro_events()
         
         # Draw everything
-        game.drawIntro()
+        self.game.drawIntro()
 
     def mainGame(self):
         # Handle room events
-        game.mainGame_events()
+        self.game.mainGame_events()
         
         # Update game state
-        dt = clock.tick(60) / 1000.0
-        game.update(dt)
+        self.game.update()
         
         # Draw the screen
-        game.drawRoom()
+        self.game.drawRoom()
         
     def changeRoom(self):
         # Handle changing room events
-        game.changeRoom_events()
+        self.game.changeRoom_events()
         
     def end(self):
         # Handle end game events
-        game.end_events()
+        self.game.end_events()
         
         # Draw the screen
-        game.drawEnd()
+        self.game.drawEnd()
         
     def secretEnd(self):
         # Handle secret end game events
-        game.secretEnd_events()
+        self.game.secretEnd_events()
         
         # Draw the screen
-        game.drawSecretEnd()
+        self.game.drawSecretEnd()
         
     def stateManager(self):
         if self.state == "intro":

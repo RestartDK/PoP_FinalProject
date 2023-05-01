@@ -1,3 +1,6 @@
+# frontend.py
+# This file contains the front end classes of the whole application
+
 import pygame
 from character import Character
 from chest import Chest
@@ -21,42 +24,32 @@ class FrontEndCharacter(pygame.sprite.Sprite):
     def update(self):
         self.rect.x = self.character.getX_Coordinate()
         self.rect.y = self.character.getY_Coordinate()
-        
-    def check_collisions(self, keys_pressed, chest_sprites, item_sprites, trap_sprites, exit_sprites, game_state):
+            
+    def optionalCollisions(self, chest_sprites, item_sprites):
         collided_chests = pygame.sprite.spritecollide(self, chest_sprites, False)
-        collided_items = pygame.sprite.spritecollide(self, item_sprites, False)
-        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, False)
-        collided_exit = pygame.sprite.spritecollide(self, exit_sprites, False)
-        
-        if len(collided_chests) > 0:
-            # The character has collided with a chest
-            # Call the openChest() method to interact with the chest
+        if collided_chests:
             for front_end_chest in collided_chests:
                 chest = front_end_chest.entity
-                if keys_pressed[pygame.K_e]:
-                    self.openChest(chest)
-            
-            
-        if len(collided_items) > 0:
-            # The character has collided with an item
-            # Call the pickUpItem() method to interact with the item
+                self.openChest(chest)
+
+        collided_items = pygame.sprite.spritecollide(self, item_sprites, True)
+        if collided_items:
             for front_end_item in collided_items:
-                if keys_pressed[pygame.K_e]:
-                    item = front_end_item.entity
-                    self.pickUpItem(item)
-                    front_end_item.kill()
-            
-            
-        if len(collided_traps) > 0:
-            # The character has collided with a trap
-            # Call the stepTrap() method to interact with the trap
+                item = front_end_item.entity
+                self.pickUpItem(item)
+    
+    def mandatoryCollisions(self, trap_sprites, exit_sprites, game_state, game):
+        collided_traps = pygame.sprite.spritecollide(self, trap_sprites, False)
+        if collided_traps:
             for front_end_trap in collided_traps:
                 trap = front_end_trap.entity
-                collided_traps.remove(front_end_trap)
                 self.stepTrap(trap)
-                
-        if len(collided_exit) > 0:
+        
+        collided_exit = pygame.sprite.spritecollide(self, exit_sprites, False)    
+        if collided_exit and not game.room_change:
+            game.room_change = True
             game_state.state = "changeRoom"
+            
                 
         
     def openChest(self, chest: Chest):
@@ -77,7 +70,7 @@ class FrontEndCharacter(pygame.sprite.Sprite):
         # Updating score with new item
         self.character.changeScore()
         print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        print("You just picked up: ", item.getName())
+        print("You just picked up: ", item.getName(), " (", item.getRarity(), ")")
         print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     
     def stepTrap(self, trap: Trap):
@@ -88,17 +81,6 @@ class FrontEndCharacter(pygame.sprite.Sprite):
         print("Oh no you have walked into a trap and you have been damaged by 1 heart!")
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         print("")
-        
-class FrontEndRoom(pygame.sprite.Sprite):
-    def __init__(self, picture_path, room: Room):
-        super().__init__()
-        self.room = room
-        self.image = pygame.image.load(picture_path).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (room.getWidth(), room.getHeight()))
-        self.rect = self.image.get_rect()
-        self.rect.x = room.getX_Coordinate()
-        self.rect.y = room.getY_Coordinate()
-        
 
 class FrontEndExit(pygame.sprite.Sprite):
     def __init__(self, picture_path, room: Room):
@@ -130,7 +112,7 @@ class FrontEndEntity(pygame.sprite.Sprite):
         self.rect.y = self.entity.getY_Coordinate()
     
 class FrontEndGameover(pygame.sprite.Sprite):
-    def __init__(self, exit_path, replay_path, score):
+    def __init__(self, exit_path, replay_path, score, SCREEN_WIDTH, SCREEN_HEIGHT):
         super().__init__()
         self.image = pygame.image.load(exit_path).convert_alpha()
         self.image = pygame.transform.scale(self.image, (SCREEN_WIDTH, SCREEN_HEIGHT/2))
@@ -149,10 +131,6 @@ class FrontEndGameover(pygame.sprite.Sprite):
     def updateScoreLabel(self, score):
         self.score_label = self.font.render("Final Score: " + str(score), 1, (255, 255, 255))
     
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
-        screen.blit(self.score_label, (SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2))
-        screen.blit(self.replay_button, self.replay_button_rect)
         
     def setScore(self, score):
         self.score = score
